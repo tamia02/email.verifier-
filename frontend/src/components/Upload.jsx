@@ -27,8 +27,18 @@ const Upload = ({ onJobCreated }) => {
             });
             onJobCreated(response.data);
         } catch (err) {
-            console.error(err);
-            setError("Upload failed. Please try again.");
+            console.error("Upload error:", err);
+            if (err.response) {
+                // The request was made and the server responded with a status code
+                // that falls out of the range of 2xx
+                setError(`Upload failed: ${err.response.data.detail || err.response.statusText || "Server Error"}`);
+            } else if (err.request) {
+                // The request was made but no response was received
+                setError("Upload failed: No response from server. Check your connection.");
+            } else {
+                // Something happened in setting up the request that triggered an Error
+                setError(`Upload failed: ${err.message}`);
+            }
         } finally {
             setUploading(false);
         }
