@@ -10,7 +10,7 @@ const Dashboard = ({ jobId, onReset }) => {
         let interval;
         const fetchJob = async () => {
             try {
-                const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+                const apiUrl = import.meta.env.VITE_API_URL || 'https://email-verifier-backend-6slt.onrender.com';
                 const res = await axios.get(`${apiUrl}/job/${jobId}`);
                 setJob(res.data);
                 if (res.data.status === 'COMPLETED' || res.data.status === 'FAILED' || res.data.status === 'CANCELLED') {
@@ -35,7 +35,7 @@ const Dashboard = ({ jobId, onReset }) => {
     const progress = job.total_emails > 0 ? (job.processed_emails / job.total_emails) * 100 : 0;
 
     const downloadUrl = (type) => {
-        const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+        const apiUrl = import.meta.env.VITE_API_URL || 'https://email-verifier-backend-6slt.onrender.com';
         return `${apiUrl}/job/${jobId}/download/${type}`;
     };
 

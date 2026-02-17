@@ -19,7 +19,7 @@ const Upload = ({ onJobCreated }) => {
         formData.append('file', file);
 
         try {
-            const apiUrl = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+            const apiUrl = import.meta.env.VITE_API_URL || 'https://email-verifier-backend-6slt.onrender.com';
             const response = await axios.post(`${apiUrl}/upload`, formData, {
                 headers: {
                     'Content-Type': 'multipart/form-data',
