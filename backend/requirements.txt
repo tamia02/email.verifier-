@@ -1,0 +1,9 @@
+fastapi
+uvicorn
+dnspython
+aiosmtplib
+pandas
+python-multipart
+email-validator
+sqlalchemy
+psycopg2-binary
