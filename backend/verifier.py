@@ -22,9 +22,9 @@ SENDER_EMAIL = os.getenv("VERIFIER_SENDER_EMAIL", "verify@check-email-status.com
 class EmailVerifier:
     def __init__(self):
         self.resolver = dns.resolver.Resolver()
-        # Use system DNS by default. 
-        # Only set custom nameservers if specifically needed or if system DNS is unreliable.
-        # self.resolver.nameservers = ['8.8.8.8', '8.8.4.4', '1.1.1.1']
+        # Render/Cloud environments sometimes have flaky local DNS.
+        # We explicitly set Google and Cloudflare DNS as reliable fallbacks.
+        self.resolver.nameservers = ['8.8.8.8', '1.1.1.1', '8.8.4.4']
         self.resolver.lifetime = TIMEOUT
         self.resolver.timeout = TIMEOUT
         self.mx_cache: Dict[str, List[str]] = {}
@@ -54,11 +54,30 @@ class EmailVerifier:
             self.mx_cache[domain] = sorted(mx_records)
             return self.mx_cache[domain]
         except (dns.resolver.NoAnswer, dns.resolver.NXDOMAIN, dns.resolver.NoNameservers):
-            self.mx_cache[domain] = []
-            return []
+             # Try fallback to A record if MX missing (RFC standard)
+            try:
+                await asyncio.to_thread(self.resolver.resolve, domain, 'A')
+                # If A record exists but no MX, technically mail can be sent to host, 
+                # but for verification purposes we often treat this as weak/invalid or just return empty MX.
+                # Let's return empty list to signify "No MX" but Domain exists.
+                self.mx_cache[domain] = []
+                return []
+            except:
+                self.mx_cache[domain] = []
+                return []
         except Exception as e:
             logger.warning(f"DNS lookup failed for {domain}: {e}")
-            return None
+            # On generic failure, try one last time with system resolver logic by clearing nameservers
+            # (In some rare internal networks, custom DNS is blocked)
+            try:
+                sys_resolver = dns.resolver.Resolver() 
+                # Default system resolver
+                records = await asyncio.to_thread(sys_resolver.resolve, domain, 'MX')
+                mx_records = [str(r.exchange).rstrip('.') for r in records]
+                self.mx_cache[domain] = sorted(mx_records)
+                return self.mx_cache[domain]
+            except:
+                return None
 
     # ... (check_smtp remains same)
 
