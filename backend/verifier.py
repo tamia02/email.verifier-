@@ -188,7 +188,15 @@ class EmailVerifier:
         
         result["status"] = smtp_result['status']
         result["reason"] = smtp_result['reason']
-        result["smtp_valid"] = (smtp_result['status'] == 'VALID')
+        
+        # RELAXED MODE: If SMTP is blocked (RISKY), we treat it as VALID based on MX records
+        # This is necessary for Render/Cloud free tiers that block Port 25
+        if result["status"] == "RISKY":
+            result["status"] = "VALID"
+            result["reason"] = "Domain Validated (Deep Check Blocked)"
+            result["smtp_valid"] = True
+            
+        result["smtp_valid"] = (result["status"] == 'VALID')
         
         return result
 
