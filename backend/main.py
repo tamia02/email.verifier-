@@ -13,12 +13,7 @@ from models import JobResponse
 app = FastAPI()
 
 # CORS
-origins = [
-    "http://localhost:5173",
-    "http://127.0.0.1:5173",
-    "https://tamia02.github.io",
-    "https://email-verifier-backend.onrender.com" 
-]
+origins = ["*"]
 
 frontend_url = os.getenv("FRONTEND_URL")
 if frontend_url:
