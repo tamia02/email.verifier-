@@ -6,16 +6,9 @@ from database import update_job_status, update_job_progress, save_email_result, 
 import logging
 
 
-# Create a file handler for debugging
-file_handler = logging.FileHandler('debug_jobs.log')
-file_handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
-file_handler.setFormatter(formatter)
-
-# Get the logger and add the handler
+# Configure logging to stdout so it shows up in Render logs
+logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
-logger.addHandler(file_handler)
 
 async def process_csv(job_id: str, file_path: str):
     """
@@ -58,8 +51,17 @@ async def process_csv(job_id: str, file_path: str):
         logger.info(f"Reading column '{email_col_name}' from {file_path}")
         
         # OFF-LOAD BLOCKING I/O TO THREAD
-        # pd.read_csv is blocking, so we run it in a separate thread to keep the event loop alive
-        df = await asyncio.to_thread(pd.read_csv, file_path, usecols=[email_col_name])
+        print(f"DEBUG: Attempting to read CSV {file_path} with column {email_col_name}")
+        try:
+            # Try reading with default encoding
+            df = await asyncio.to_thread(pd.read_csv, file_path, usecols=[email_col_name])
+        except UnicodeDecodeError:
+            print(f"DEBUG: Default encoding failed, trying utf-8-sig")
+            # Fallback for Excel-saved CSVs
+            df = await asyncio.to_thread(pd.read_csv, file_path, usecols=[email_col_name], encoding='utf-8-sig')
+        except Exception as read_err:
+             print(f"CRITICAL: Failed to read CSV file: {read_err}")
+             raise read_err
         
         # Standardize the column name in our dataframe to 'email' for internal use
         df = df.rename(columns={email_col_name: 'email'})
