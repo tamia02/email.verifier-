@@ -161,4 +161,5 @@ def download_results(job_id: str, type: str):
 if __name__ == "__main__":
     import uvicorn
     port = int(os.getenv("PORT", 8000))
-    uvicorn.run(app, host="0.0.0.0", port=port)
+    # Increased keep-alive to preventing premature closing on slow networks
+    uvicorn.run(app, host="0.0.0.0", port=port, timeout_keep_alive=120)
