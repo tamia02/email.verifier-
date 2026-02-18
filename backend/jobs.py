@@ -81,10 +81,25 @@ async def process_csv(job_id: str, file_path: str):
         for i in range(0, total, BATCH_SIZE):
             batch = emails[i : i + BATCH_SIZE]
             tasks = [verifier.verify(email) for email in batch]
-            results = await asyncio.gather(*tasks)
+            # Use return_exceptions=True so one bad email doesn't crash the whole batch
+            results = await asyncio.gather(*tasks, return_exceptions=True)
             
-            for res in results:
-                save_email_result(job_id, res)
+            for i, res in enumerate(results):
+                if isinstance(res, Exception):
+                    # Log the exception and save a failure result
+                    failed_email = batch[i]
+                    logger.error(f"Error verifying {failed_email}: {res}")
+                    print(f"CRITICAL: Failed to verify {failed_email}: {res}")
+                    save_email_result(job_id, {
+                        "email": failed_email,
+                        "status": "ERROR",
+                        "reason": f"Verification Crash: {str(res)}",
+                        "smtp_valid": False,
+                        "mx_found": False,
+                        "catch_all": False
+                    })
+                else:
+                    save_email_result(job_id, res)
             
             # Update progress
             processed = min(i + BATCH_SIZE, total)
