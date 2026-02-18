@@ -106,8 +106,9 @@ class EmailVerifier:
 
         except aiosmtplib.SMTPResponseException as e:
             return {"status": "UNKNOWN", "reason": f"SMTP Error {e.code}: {e.message}"}
-        except aiosmtplib.SMTPConnectError:
-             return {"status": "UNKNOWN", "reason": "SMTP Connection Failed"}
+        except (aiosmtplib.SMTPConnectError, aiosmtplib.SMTPTimeoutError, TimeoutError, ConnectionRefusedError):
+             # This is likely Port 25 blocking by the URL provider (Render/DigitalOcean)
+             return {"status": "RISKY", "reason": "SMTP Connection Blocked (MX Valid)"}
         except Exception as e:
              return {"status": "UNKNOWN", "reason": f"SMTP Exception: {str(e)}"}
 
