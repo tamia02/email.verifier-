@@ -79,7 +79,55 @@ class EmailVerifier:
             except:
                 return None
 
-    # ... (check_smtp remains same)
+    async def check_smtp(self, email: str, mx_server: str) -> dict:
+        """
+        Connects to SMTP server and verifies email existence.
+        """
+        try:
+            # Create SMTP connection
+            smtp = aiosmtplib.SMTP(hostname=mx_server, port=SMTP_PORT, timeout=TIMEOUT)
+            await smtp.connect()
+            await smtp.ehlo()
+            
+            # MAIL FROM
+            await smtp.mail(SENDER_EMAIL)
+            
+            # RCPT TO
+            code, message = await smtp.rcpt(email)
+            
+            await smtp.quit()
+            
+            if code == 250:
+                return {"status": "VALID", "reason": "SMTP Response 250 OK"}
+            elif code == 550:
+                return {"status": "INVALID", "reason": "User Not Found (550)"}
+            else:
+                 return {"status": "UNKNOWN", "reason": f"SMTP Response {code}: {message}"}
+
+        except aiosmtplib.SMTPResponseException as e:
+            return {"status": "UNKNOWN", "reason": f"SMTP Error {e.code}: {e.message}"}
+        except aiosmtplib.SMTPConnectError:
+             return {"status": "UNKNOWN", "reason": "SMTP Connection Failed"}
+        except Exception as e:
+             return {"status": "UNKNOWN", "reason": f"SMTP Exception: {str(e)}"}
+
+    async def is_catch_all(self, domain: str, mx_server: str) -> bool:
+        """
+        Checks if a domain is catch-all by verifying a non-existent email.
+        """
+        if domain in self.catch_all_cache:
+            return self.catch_all_cache[domain]
+
+        # Generate random invalid email
+        random_prefix = ''.join(random.choices(string.ascii_lowercase + string.digits, k=15))
+        test_email = f"{random_prefix}@{domain}"
+        
+        result = await self.check_smtp(test_email, mx_server)
+        
+        # If the random email is VALID, then the domain is Catch-All
+        is_catch_all = (result['status'] == 'VALID')
+        self.catch_all_cache[domain] = is_catch_all
+        return is_catch_all
 
     async def verify(self, email: str) -> dict:
         """
