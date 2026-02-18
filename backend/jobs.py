@@ -10,6 +10,13 @@ import logging
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
+# Add file handler for persistent error logging
+fh = logging.FileHandler('job_errors.log')
+fh.setLevel(logging.ERROR)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+fh.setFormatter(formatter)
+logger.addHandler(fh)
+
 async def process_csv(job_id: str, file_path: str):
     """
     Background task to process the CSV file.
@@ -84,10 +91,10 @@ async def process_csv(job_id: str, file_path: str):
             # Use return_exceptions=True so one bad email doesn't crash the whole batch
             results = await asyncio.gather(*tasks, return_exceptions=True)
             
-            for i, res in enumerate(results):
+            for idx, res in enumerate(results):
                 if isinstance(res, Exception):
                     # Log the exception and save a failure result
-                    failed_email = batch[i]
+                    failed_email = batch[idx]
                     logger.error(f"Error verifying {failed_email}: {res}")
                     print(f"CRITICAL: Failed to verify {failed_email}: {res}")
                     save_email_result(job_id, {
@@ -105,7 +112,7 @@ async def process_csv(job_id: str, file_path: str):
             processed = min(i + BATCH_SIZE, total)
             
             # Log a sample result for debugging
-            if results:
+            if results and not isinstance(results[0], Exception):
                  sample = results[0]
                  print(f"DEBUG: Sample Result for {sample['email']}: {sample['status']} - {sample.get('reason')}")
             

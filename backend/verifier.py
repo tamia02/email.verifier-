@@ -126,85 +126,97 @@ class EmailVerifier:
             "catch_all": False
         }
 
-        # 1. Syntax Check
-        if not self.check_syntax(email):
-            result["status"] = "INVALID"
-            result["reason"] = "Invalid Syntax"
-            return result
-        
         try:
-            domain = email.split('@')[1].lower()
-        except IndexError:
-             result["status"] = "INVALID"
-             result["reason"] = "Invalid Format"
-             return result
+            # 1. Syntax Check
+            if not self.check_syntax(email):
+                result["status"] = "INVALID"
+                result["reason"] = "Invalid Syntax"
+                return result
+            
+            try:
+                domain = email.split('@')[1].lower()
+            except IndexError:
+                 result["status"] = "INVALID"
+                 result["reason"] = "Invalid Format"
+                 return result
 
-        # 2. Disposable Check
-        if self.is_disposable(domain):
-            result["status"] = "INVALID"
-            result["reason"] = "Disposable Domain"
-            return result
+            # 2. Disposable Check
+            if self.is_disposable(domain):
+                result["status"] = "INVALID"
+                result["reason"] = "Disposable Domain"
+                return result
 
-        # 3. Role-Based Check
-        if self.is_role_account(email):
-            result["status"] = "RISKY"
-            result["reason"] = "Role-Based Account"
-            # We continue checking to see if it's real, but default to RISKY if we can't confirm
-        
-        # 4. MX Record Check
-        mx_records = await self.get_mx_records(domain)
-        
-        if mx_records is None:
-            result["status"] = "UNKNOWN"
-            result["reason"] = "DNS Lookup Failed"
-            return result
+            # 3. Role-Based Check
+            if self.is_role_account(email):
+                result["status"] = "RISKY"
+                result["reason"] = "Role-Based Account"
+                # We continue checking to see if it's real, but default to RISKY if we can't confirm
             
-        if not mx_records:
-            result["status"] = "INVALID"
-            result["reason"] = "No MX Records"
-            return result
-        
-        result["mx_found"] = True
-        mx_server = mx_records[0]
+            # 4. MX Record Check
+            mx_records = await self.get_mx_records(domain)
+            
+            if mx_records is None:
+                result["status"] = "UNKNOWN"
+                result["reason"] = "DNS Lookup Failed"
+                return result
+                
+            if not mx_records:
+                result["status"] = "INVALID"
+                result["reason"] = "No MX Records"
+                return result
+            
+            result["mx_found"] = True
+            mx_server = mx_records[0]
 
-        # 5. Catch-All Check (Skip if we already flagged as role-based, we want to know connection status)
-        # Only check catch-all if we haven't failed already
-        
-        # 6. SMTP Check
-        smtp_result = await self.check_smtp(email, mx_server)
-        
-        # Final Decision Logic
-        if smtp_result['status'] == "VALID":
-            # True Valid (server confirmed)
-            result["status"] = "VALID"
-            result["reason"] = "SMTP Valid"
-            result["smtp_valid"] = True
+            # 5. Catch-All Check (Skip if we already flagged as role-based, we want to know connection status)
+            # Only check catch-all if we haven't failed already
             
-        elif smtp_result['status'] == "INVALID":
-            # True Invalid (server rejected)
-            result["status"] = "INVALID"
-            result["reason"] = smtp_result["reason"]
+            # 6. SMTP Check
+            smtp_result = await self.check_smtp(email, mx_server)
             
-        elif smtp_result['status'] == "RISKY":
-            # This means PORT 25 BLOCKED (Render case)
-            # Since user wants VALID results for real domains, we upgrade here
-            # BUT we respect the Role-Based check from earlier
-            
-            if result["status"] == "RISKY" and result["reason"] == "Role-Based Account":
-                # Keep as Risky
-                pass 
-            else:
-                # Upgrade to Valid (Domain Verified)
+            # Final Decision Logic
+            if smtp_result['status'] == "VALID":
+                # True Valid (server confirmed)
                 result["status"] = "VALID"
-                result["reason"] = "Domain Valid (SMTP Blocked)"
+                result["reason"] = "SMTP Valid"
                 result["smtp_valid"] = True
                 
-        else:
-            # Unknown
-             result["status"] = "UNKNOWN"
-             result["reason"] = smtp_result["reason"]
+            elif smtp_result['status'] == "INVALID":
+                # True Invalid (server rejected)
+                result["status"] = "INVALID"
+                result["reason"] = smtp_result["reason"]
+                
+            elif smtp_result['status'] == "RISKY":
+                # This means PORT 25 BLOCKED (Render case)
+                # Since user wants VALID results for real domains, we upgrade here
+                # BUT we respect the Role-Based check from earlier
+                
+                if result["status"] == "RISKY" and result["reason"] == "Role-Based Account":
+                    # Keep as Risky
+                    pass 
+                else:
+                    # Upgrade to Valid (Domain Verified)
+                    result["status"] = "VALID"
+                    result["reason"] = "Domain Valid (SMTP Blocked)"
+                    result["smtp_valid"] = True
+                    
+            else:
+                 # Unknown
+                 result["status"] = "UNKNOWN"
+                 result["reason"] = smtp_result["reason"]
 
-        return result
+            return result
+            
+        except Exception as e:
+            logger.error(f"Unexpected error validating {email}: {e}", exc_info=True)
+            return {
+                "email": email,
+                "status": "UNKNOWN",
+                "reason": f"System Error: {str(e)}",
+                "smtp_valid": False,
+                "mx_found": False,
+                "catch_all": False
+            }
 
 if __name__ == "__main__":
     # Test runner

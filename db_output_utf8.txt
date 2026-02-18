@@ -1,0 +1,36 @@
+Job ID: d075ce74-a782-4d0d-98c2-21b1e1b28c87
+  Status: COMPLETED
+  Created: 2026-02-16 10:56:30.836414
+  Completed: 2026-02-16 11:06:55.841805
+  Progress: 1000 / 1000
+  Last 5 Emails:
+    - bswain@sublime-mail.com: UNKNOWN (DNS Lookup Failed (Timeout/Network))
+    - david.kashak@connatix.com: UNKNOWN (DNS Lookup Failed (Timeout/Network))
+    - brad@hicommon.com: UNKNOWN (DNS Lookup Failed (Timeout/Network))
+    - dennis.kennedy@nationaldiversitycouncil.org: UNKNOWN (DNS Lookup Failed (Timeout/Network))
+    - robert@bouforyou.com: UNKNOWN (DNS Lookup Failed (Timeout/Network))
+--------------------
+Job ID: 678be556-1850-4ed6-b38e-30b18f245ac2
+  Status: COMPLETED
+  Created: 2026-02-16 10:55:11.439705
+  Completed: 2026-02-16 10:55:22.203672
+  Progress: 12 / 12
+--------------------
+Job ID: f5128be6-9ffa-441b-a787-eb019108c627
+  Status: COMPLETED
+  Created: 2026-02-16 10:35:40.060157
+  Completed: 2026-02-16 10:35:40.168737
+  Progress: 0 / 0
+--------------------
+Job ID: 36dee22e-55ea-4f62-84a5-6976cdc5df09
+  Status: COMPLETED
+  Created: 2026-02-16 10:35:24.106837
+  Completed: 2026-02-16 10:35:35.216765
+  Progress: 12 / 12
+--------------------
+Job ID: 13bc208e-71d7-467a-bbfd-f27e3ea830b6
+  Status: COMPLETED
+  Created: 2026-02-15 22:02:25.454198
+  Completed: 2026-02-15 22:12:52.125899
+  Progress: 1000 / 1000
+--------------------

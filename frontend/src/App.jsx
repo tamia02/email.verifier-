@@ -14,20 +14,35 @@ function App() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-800">
-      <div className="max-w-5xl mx-auto">
-        <header className="text-center mb-16">
-          <h1 className="text-5xl font-extrabold text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-cyan-600 tracking-tight sm:text-6xl mb-4">
-            Email Verifier
+    <div className="min-h-screen py-12 px-4 sm:px-6 lg:px-8 font-sans text-slate-100 flex flex-col items-center justify-center relative overflow-hidden">
+
+      {/* Background Blobs */}
+      <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] rounded-full bg-purple-600/30 blur-[100px] animate-pulse"></div>
+      <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] rounded-full bg-blue-600/30 blur-[100px] animate-pulse"></div>
+
+      <div className="max-w-6xl w-full z-10">
+        <header className="text-center mb-12">
+          <div className="inline-block mb-4 px-4 py-1.5 rounded-full bg-white/5 border border-white/10 text-xs font-medium tracking-wider uppercase text-blue-300 backdrop-blur-md">
+            Enterprise Grade Verification
+          </div>
+          <h1 className="text-6xl md:text-7xl font-extrabold tracking-tight mb-6">
+            <span className="bg-clip-text text-transparent bg-gradient-to-r from-blue-400 via-cyan-400 to-purple-400 animate-gradient-x">
+              Email Verifier Pro
+            </span>
           </h1>
-          <p className="max-w-2xl mx-auto text-xl text-slate-600">
-            Bulk verify your email lists with high accuracy. <br />
-            <span className="text-sm text-slate-400 font-medium tracking-wider uppercase mt-2 block">Powered by Python & FastAPI</span>
+          <p className="max-w-2xl mx-auto text-xl text-slate-300 font-light leading-relaxed">
+            Clean your email lists with AI-powered accuracy. <br />
+            <span className="text-slate-400">Detect disposables, spam traps, and invalid domains instantly.</span>
           </p>
         </header>
 
-        <main className="relative z-10">
-          <div className="bg-white/60 backdrop-blur-xl rounded-3xl shadow-2xl border border-white/50 p-6 md:p-12">
+        <main className="relative">
+          {/* Main Glass Card */}
+          <div className="bg-slate-900/40 backdrop-blur-2xl rounded-[2.5rem] shadow-2xl border border-white/10 p-8 md:p-12 overflow-hidden relative">
+
+            {/* Inner Glow */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-2/3 h-1 bg-gradient-to-r from-transparent via-blue-500/50 to-transparent blur-sm"></div>
+
             {!currentJob ? (
               <Upload onJobCreated={handleJobCreated} />
             ) : (
@@ -36,7 +51,7 @@ function App() {
           </div>
         </main>
 
-        <footer className="mt-12 text-center text-slate-400 text-sm">
+        <footer className="mt-16 text-center text-slate-500 text-sm font-medium">
           &copy; {new Date().getFullYear()} Email Verifier Pro. All rights reserved.
         </footer>
       </div>
