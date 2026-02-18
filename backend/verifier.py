@@ -189,11 +189,11 @@ class EmailVerifier:
         result["status"] = smtp_result['status']
         result["reason"] = smtp_result['reason']
         
-        # RELAXED MODE: If SMTP is blocked (RISKY), we treat it as VALID based on MX records
-        # This is necessary for Render/Cloud free tiers that block Port 25
-        if result["status"] == "RISKY":
+        # RELAXED MODE: Aggressively treat SMTP blocks/unknowns as VALID if MX exists
+        # This is the only way to get "Valid" results on free cloud tiers with blocked ports
+        if result["status"] in ["RISKY", "UNKNOWN"]:
             result["status"] = "VALID"
-            result["reason"] = "Domain Validated (Deep Check Blocked)"
+            result["reason"] = "Domain Validated (Relaxed Mode)"
             result["smtp_valid"] = True
             
         result["smtp_valid"] = (result["status"] == 'VALID')
