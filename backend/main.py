@@ -96,45 +96,64 @@ def download_results(job_id: str, type: str):
     original_file_path = os.path.join(UPLOAD_DIR, f"{job_id}_{job['filename']}")
     
     if type == 'cleaned':
-        # Logic for Cleaned List: Merge with original data and keep only Valid
+        # Logic for Cleaned List: Return original rows where status is VALID
+        output_file = os.path.join(UPLOAD_DIR, f"{job_id}_cleaned.csv")
+        
         if not os.path.exists(original_file_path):
              raise HTTPException(status_code=404, detail="Original file not found")
         
         try:
-            original_df = pd.read_csv(original_file_path)
+            # multiple encodings to handle various CSV types
+            try:
+                original_df = pd.read_csv(original_file_path, encoding='utf-8')
+            except UnicodeDecodeError:
+                original_df = pd.read_csv(original_file_path, encoding='latin-1')
+
+            # normalize column names for search
+            original_columns = original_df.columns.tolist()
             
-            # Find the email column case-insensitively
-            email_col = next((c for c in original_df.columns if c.lower() == 'email'), None)
+            # Find the email column
+            email_col = None
+            for col in original_columns:
+                if 'email' in col.lower() or 'e-mail' in col.lower() or 'mail' in col.lower():
+                    email_col = col
+                    break
             
             if not email_col:
-                # Fallback: Check if we can find any column containing 'email'
-                email_col = next((c for c in original_df.columns if 'email' in c.lower()), None)
-            
+                # If no clear email column, assume first column? Or fail?
+                # Let's try to assume the column with largest number of '@' symbols
+                max_at_count = 0
+                for col in original_columns:
+                    if original_df[col].dtype == 'object':
+                        at_count = original_df[col].str.count('@').sum()
+                        if at_count > max_at_count:
+                            max_at_count = at_count
+                            email_col = col
+
             if not email_col:
                  raise HTTPException(status_code=400, detail="Could not identify email column in original file")
 
-            # Normalize email column for merging
-            original_df['email_lower'] = original_df[email_col].astype(str).str.lower().str.strip()
-            results_df['email_lower'] = results_df['email'].astype(str).str.lower().str.strip()
+            # Prepare for merge
+            # Create a normalized temporary column for joining
+            original_df['_email_normalized'] = original_df[email_col].astype(str).str.lower().str.strip()
+            results_df['_email_normalized'] = results_df['email'].astype(str).str.lower().str.strip()
             
-            # Merge
-            merged_df = pd.merge(original_df, results_df[['email_lower', 'status', 'reason']], on='email_lower', how='left')
+            # Merge to get status
+            merged_df = pd.merge(original_df, results_df[['_email_normalized', 'status']], on='_email_normalized', how='left')
             
-            # Filter for VALID emails
+            # Filter: Keep ONLY valid emails
             cleaned_df = merged_df[merged_df['status'] == 'VALID'].copy()
             
-            # Cleanup helper columns
-            if 'email_lower' in cleaned_df.columns:
-                cleaned_df = cleaned_df.drop(columns=['email_lower'])
+            # Drop the helper columns and the status column (since user just wants original format)
+            cleaned_df = cleaned_df.drop(columns=['_email_normalized', 'status'])
             
-            # Output
-            output_file = os.path.join(UPLOAD_DIR, f"{job_id}_cleaned.csv")
+            # Save
             cleaned_df.to_csv(output_file, index=False)
             return FileResponse(output_file, media_type='text/csv', filename=f"cleaned_{job['filename']}")
 
         except Exception as e:
             print(f"Error generating cleaned list: {e}")
-            raise HTTPException(status_code=500, detail="Error generating cleaned list")
+            raise HTTPException(status_code=500, detail=f"Error generating cleaned list: {str(e)}")
 
     else:
         # Standard segmented downloads (results only)
