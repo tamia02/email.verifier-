@@ -4,7 +4,8 @@ from fastapi.responses import JSONResponse, FileResponse
 import shutil
 import os
 import uuid
-import pandas as pd
+from datetime import datetime
+# import pandas as pd (Moved to functions to speed up startup)
 from typing import List
 from database import init_db, create_job, get_job, get_job_results
 from jobs import process_csv
@@ -77,7 +78,7 @@ def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(...))
         "invalid_emails": 0,
         "catch_all_emails": 0,
         "risky_emails": 0,
-        "created_at": pd.Timestamp.now()
+        "created_at": datetime.now()
     }
 
 @app.get("/job/{job_id}", response_model=JobResponse)
@@ -98,6 +99,7 @@ def download_results(job_id: str, type: str):
          raise HTTPException(status_code=404, detail="No results found")
     
     # Convert DB results to DataFrame
+    import pandas as pd
     results_df = pd.DataFrame(results)
     
     # Path to original file

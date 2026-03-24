@@ -1,4 +1,4 @@
-import pandas as pd
+# import pandas as pd (Moved to function)
 import asyncio
 from typing import List
 from verifier import EmailVerifier
@@ -30,6 +30,7 @@ async def process_csv(job_id: str, file_path: str):
         verifier = EmailVerifier()
         # Read just the header first to find the email column
         # This avoids loading the entire huge file into memory if we just need one column
+        import pandas as pd
         df_header = pd.read_csv(file_path, nrows=0)
         
         # Normalize headers to map {clean_name: original_name}
@@ -112,9 +113,9 @@ async def process_csv(job_id: str, file_path: str):
             processed = min(i + BATCH_SIZE, total)
             
             # Log a sample result for debugging
-            if results and not isinstance(results[0], Exception):
+            if results and isinstance(results[0], dict):
                  sample = results[0]
-                 print(f"DEBUG: Sample Result for {sample['email']}: {sample['status']} - {sample.get('reason')}")
+                 print(f"DEBUG: Sample Result for {sample.get('email')}: {sample.get('status')} - {sample.get('reason')}")
             
             print(f"DEBUG: Job {job_id} progress: {processed}/{total}")
             update_job_progress(job_id, processed)
