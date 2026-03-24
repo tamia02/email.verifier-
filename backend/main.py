@@ -69,7 +69,11 @@ def upload_file(background_tasks: BackgroundTasks, file: UploadFile = File(...))
         "status": "PENDING",
         "total_emails": total_emails,
         "processed_emails": 0,
-        "created_at": pd.Timestamp.now().isoformat()
+        "valid_emails": 0,
+        "invalid_emails": 0,
+        "catch_all_emails": 0,
+        "risky_emails": 0,
+        "created_at": pd.Timestamp.now()
     }
 
 @app.get("/job/{job_id}", response_model=JobResponse)

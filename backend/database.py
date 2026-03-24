@@ -129,6 +129,16 @@ def get_job(job_id: str):
     try:
         job = db.query(Job).filter(Job.id == job_id).first()
         if job:
+            # Calculate counts
+            valid_emails = db.query(Email).filter(Email.job_id == job_id, Email.status == 'VALID').count()
+            invalid_emails = db.query(Email).filter(Email.job_id == job_id, Email.status == 'INVALID').count()
+            catch_all_emails = db.query(Email).filter(Email.job_id == job_id, Email.catch_all == True).count()
+            # Risky = Unknown status OR Catch-all
+            risky_emails = db.query(Email).filter(
+                Email.job_id == job_id, 
+                (Email.status == 'UNKNOWN') | (Email.catch_all == True)
+            ).count()
+
             # Convert to dict for compatibility
             return {
                 "id": job.id,
@@ -136,6 +146,10 @@ def get_job(job_id: str):
                 "status": job.status,
                 "total_emails": job.total_emails,
                 "processed_emails": job.processed_emails,
+                "valid_emails": valid_emails,
+                "invalid_emails": invalid_emails,
+                "catch_all_emails": catch_all_emails,
+                "risky_emails": risky_emails,
                 "created_at": job.created_at,
                 "completed_at": job.completed_at
             }

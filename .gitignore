@@ -7,9 +7,9 @@
 __pycache__/
 *.py[cod]
 *$py.class
+**/venv/
+**/.env
 env/
-venv/
-.env
 emails.db
 *.log
 backend/__pycache__/

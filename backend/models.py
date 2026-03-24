@@ -16,6 +16,10 @@ class Job(BaseModel):
     status: JobStatus
     total_emails: int
     processed_emails: int
+    valid_emails: int = 0
+    invalid_emails: int = 0
+    catch_all_emails: int = 0
+    risky_emails: int = 0
     created_at: datetime
     completed_at: Optional[datetime] = None
 
