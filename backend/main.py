@@ -13,10 +13,14 @@ from models import JobResponse
 app = FastAPI()
 
 # CORS
-origins = ["*"]
+origins = [
+    "https://email-verifier-xi.vercel.app",
+    "http://localhost:5173",
+    "http://localhost:3000",
+]
 
 frontend_url = os.getenv("FRONTEND_URL")
-if frontend_url:
+if frontend_url and frontend_url not in origins:
     origins.append(frontend_url)
 
 app.add_middleware(
