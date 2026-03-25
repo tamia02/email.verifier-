@@ -38,7 +38,12 @@ if not os.path.exists(UPLOAD_DIR):
     os.makedirs(UPLOAD_DIR)
 
 # Initialize DB
-init_db()
+try:
+    init_db()
+except Exception as e:
+    print(f"CRITICAL ERROR: Failed to initialize database on startup: {e}")
+    # We continue so uvicorn can at least start, but subsequent DB calls will fail.
+    # This is better than a hard crash during import on some platforms.
 
 @app.get("/")
 def read_root():

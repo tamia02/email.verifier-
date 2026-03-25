@@ -55,9 +55,28 @@ def get_db():
 
 # Core Functions (Matching original interface)
 
+import time
+
 def init_db():
-    # Create tables
-    Base.metadata.create_all(bind=engine)
+    # Create tables with retry logic for production stability
+    max_retries = 5
+    retry_delay = 5  # seconds
+    
+    for attempt in range(max_retries):
+        try:
+            print(f"INFO: Database connection attempt {attempt + 1}/{max_retries}...")
+            # Create tables
+            Base.metadata.create_all(bind=engine)
+            print("SUCCESS: Database initialized and tables verified.")
+            return
+        except Exception as e:
+            print(f"WARNING: Database connection failed: {e}")
+            if attempt < max_retries - 1:
+                print(f"INFO: Retrying in {retry_delay} seconds...")
+                time.sleep(retry_delay)
+            else:
+                print("ERROR: Maximum database connection retries reached.")
+                raise e
 
 def create_job(job_id: str, filename: str, total_emails: int):
     db = SessionLocal()
