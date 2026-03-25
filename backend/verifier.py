@@ -195,10 +195,10 @@ class EmailVerifier:
                     # Keep as Risky
                     pass 
                 else:
-                    # Upgrade to Valid (Domain Verified)
-                    result["status"] = "VALID"
+                    # Downgrade to Risky because SMTP is blocked, but domain is valid
+                    result["status"] = "RISKY"
                     result["reason"] = "Domain Valid (SMTP Blocked)"
-                    result["smtp_valid"] = True
+                    result["smtp_valid"] = False
                     
             else:
                  # Unknown

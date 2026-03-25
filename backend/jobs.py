@@ -38,13 +38,16 @@ async def process_csv(job_id: str, file_path: str):
         header_map = {c.lower().strip(): c for c in df_header.columns}
         print(f"DEBUG: File Headers Detected: {list(header_map.keys())}")
         
-        # Try to find 'email'
+        # Try to find 'email' as an exact match first
         email_col_name = header_map.get('email')
         
-        # Fallback: look for any column containing 'email'
+        # Fallback: look for common email column variants or any column containing 'email'
         if not email_col_name:
              for clean, original in header_map.items():
-                 if 'email' in clean:
+                 if clean in ['work email', 'e-mail', 'email address', 'contact email']:
+                     email_col_name = original
+                     break
+                 elif 'email' in clean:
                      email_col_name = original
                      break
         
@@ -55,7 +58,7 @@ async def process_csv(job_id: str, file_path: str):
             return
 
         # Now read ONLY the email column
-        print(f"DEBUG: Found email column '{email_col_name}' in {file_path}")
+        print(f"DEBUG: Found email column '{email_col_name}' among headers {list(header_map.keys())} in {file_path}")
         logger.info(f"Reading column '{email_col_name}' from {file_path}")
         
         # OFF-LOAD BLOCKING I/O TO THREAD
