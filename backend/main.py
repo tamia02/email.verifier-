@@ -153,14 +153,17 @@ def download_results(job_id: str, type: str):
             original_df['_email_normalized'] = original_df[email_col].astype(str).str.lower().str.strip()
             results_df['_email_normalized'] = results_df['email'].astype(str).str.lower().str.strip()
             
+            # Rename backend status to avoid collision if original file has a 'status' column
+            results_df_merge = results_df[['_email_normalized', 'status']].rename(columns={'status': '_backend_status'})
+            
             # Merge to get status
-            merged_df = pd.merge(original_df, results_df[['_email_normalized', 'status']], on='_email_normalized', how='left')
+            merged_df = pd.merge(original_df, results_df_merge, on='_email_normalized', how='left')
             
             # Filter: Keep ONLY valid emails
-            cleaned_df = merged_df[merged_df['status'] == 'VALID'].copy()
+            cleaned_df = merged_df[merged_df['_backend_status'] == 'VALID'].copy()
             
             # Drop the helper columns and the status column (since user just wants original format)
-            cleaned_df = cleaned_df.drop(columns=['_email_normalized', 'status'])
+            cleaned_df = cleaned_df.drop(columns=['_email_normalized', '_backend_status'])
             
             # Save
             cleaned_df.to_csv(output_file, index=False)
