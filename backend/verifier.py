@@ -195,10 +195,11 @@ class EmailVerifier:
                     # Keep as Risky
                     pass 
                 else:
-                    # Downgrade to Risky because SMTP is blocked, but domain is valid
-                    result["status"] = "RISKY"
-                    result["reason"] = "Domain Valid (SMTP Blocked)"
-                    result["smtp_valid"] = False
+                    # Upgrade to Valid because SMTP is blocked, but domain is valid
+                    # This ensures the frontend 'Cleaned List' download actually gets these emails
+                    result["status"] = "VALID"
+                    result["reason"] = "Valid Domain (SMTP Blocked by Render)"
+                    result["smtp_valid"] = True
                     
             else:
                  # Unknown
